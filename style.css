@@ -1,3 +1,12 @@
+.delete-checkBox {
+  display: none;
+}
 
+body ul li {
+  max-height: 60px;
+}
+body ul li p {
+  overflow-wrap: anywhere;
+}
 
 /*# sourceMappingURL=style.css.map */
