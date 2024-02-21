@@ -8,27 +8,26 @@ addEventDelete();
 addEventUl();
 addEventSort();
 
-toDoList = getToDoListLocalStorage();
+let localToDoList = getToDoListLocalStorage();
 
-redrawToDo(toDoList.tasks);
+if (localToDoList) {
+    toDoList = localToDoList;
+    redrawToDo(toDoList.tasks);
+} else {
+    redrawToDo(toDoList.tasks);
+}
 
 function redrawToDo(tasks) {
     const listToDo = document.querySelector("ul.list-group");
-
     listToDo.textContent = "";
 
     for (const task of tasks) {
-
         listToDo.appendChild(createTask(task))
     }
-
 }
 
 function updateTable(toDoList) {
-
-    let newToDoList = toDoList;
-
-    let sortTasks = filterToDoList(newToDoList.tasks, newToDoList.filter)
+    let sortTasks = filterToDoList(toDoList.tasks, toDoList.filter)
 
     redrawToDo(sortTasks);
 }
@@ -37,7 +36,6 @@ function createTask(task) {
     let listToDo = document.createElement("li");
     listToDo.classList.add("list-group-item", "list-group-item-action", "d-flex", "overflow-y-hidden");
     listToDo.id = task.id;
-
     listToDo.innerHTML = creatTaskDocHtml(task);
 
     refreshEventInTask(listToDo);
@@ -46,25 +44,19 @@ function createTask(task) {
 }
 
 function removeToDo(toDoList) {
-
-    let newToDoList = toDoList;
-
-    for (let i = 0; i < newToDoList.tasks.length; i++) {
-
-        for (const id of newToDoList.selectTasksId) {
-
-            if (newToDoList.tasks[i].id.toString() === id) {
-
-                newToDoList.tasks.splice(i,1);
+    for (let i = 0; i < toDoList.tasks.length; i++) {
+        for (const id of toDoList.selectTasksId) {
+            if (toDoList.tasks[i].id.toString() === id) {
+                toDoList.tasks.splice(i,1);
             }
         }
     }
 
-    newToDoList.selectTasksId = [];
+    toDoList.selectTasksId = [];
 
-    updateTable(newToDoList);
+    updateTable(toDoList);
 
-    return newToDoList;
+    return toDoList;
 }
 
 function modifyRow(element) {
@@ -103,8 +95,7 @@ function modifyRow(element) {
                     <svg viewBox="0 0 16 16" width="16" height="16" >
                     <use xlink:href="#change-field-cansel"></use></svg>                 
                     </button>
-                </div>       
-                
+                </div> 
             </div>
         </div>
     `;
@@ -146,7 +137,6 @@ function successModify(tasks, element) {
         let elementTask = findParentTask(element);
         elementTask.style = "";
         let statusTask = elementTask.querySelector("button.dropdown-toggle").value;
-
         let task = {
             id: `${elementTask.id}`,
             task: `${inputChangeTask.value}`,
@@ -178,7 +168,6 @@ function canselModify(tasks, element) {
 
     tasks.find((value)=>{
         if (value.id.toString() === elementTask.id) {
-
             elementTask.innerHTML = creatTaskDocHtml(value);
         }
     })
@@ -191,7 +180,6 @@ btnAddTask.addEventListener("click",()=>{
     let inputAddTask = document.getElementById("recording-task");
 
     if (checkInputFull(inputAddTask)) {
-
         let task = {
             id: `${Math.floor(Math.random() * (2000 - 0) + 0)}`,
             task: `${inputAddTask.value}`,
@@ -206,8 +194,7 @@ btnAddTask.addEventListener("click",()=>{
 
         updateTable(toDoList);
     }
-
-})
+});
 
 function checkInputFull(element) {
 
@@ -309,7 +296,6 @@ function changeStatusTask(tasks, element) {
     taskText.classList.add(statusTask(status));
 
     for (let i=0; i<tasks.length; i++) {
-
         if (tasks[i].id.toString() === task.id) {
             tasks[i].status = status;
 
@@ -343,12 +329,8 @@ function filterToDoList(tasks, filter) {
     let sortToDoList = tasks.slice();
 
     if (filter !== ""){
-        sortToDoList.sort(function(a, b){
-            if (a.status === filter && b.status !==filter) {
-                return -1;
-            } else  {
-                return 1;
-            }
+        sortToDoList = sortToDoList.filter((element)=>{
+            return element.status === filter;
         });
     }
 
@@ -384,7 +366,6 @@ function addEventDelete() {
     });
 
     btnSubmitDelete.addEventListener("click", () => {
-
         toDoList = removeToDo(toDoList);
 
         saveToDoListLocalStorage(toDoList);
