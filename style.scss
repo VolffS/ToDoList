@@ -1,3 +1,13 @@
+.delete-checkBox {
+  display: none;
+}
 body {
-
+  ul {
+    li {
+      p{
+        overflow-wrap: anywhere;
+      }
+      max-height: 55px;
+    }
+  }
 }
