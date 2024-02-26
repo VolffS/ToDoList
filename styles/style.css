@@ -9,4 +9,14 @@ body ul li p {
   overflow-wrap: anywhere;
 }
 
+.errorBody {
+  height: 100vh;
+  display: grid;
+  place-items: center;
+  background-color: black;
+}
+.errorBody .Text-H1 {
+  color: red;
+}
+
 /*# sourceMappingURL=style.css.map */

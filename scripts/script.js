@@ -1,21 +1,18 @@
 let toDoList = {
     tasks: [],
     selectTasksId: [],
-    filter: "",
+    filter: ""
 }
 
 addEventDelete();
 addEventUl();
 addEventSort();
 
-let localToDoList = getToDoListLocalStorage();
+getToDoListStorage().then(tasks => {
+    toDoList.tasks = tasks;
+    redrawToDo(toDoList.tasks);
+});
 
-if (localToDoList) {
-    toDoList = localToDoList;
-    redrawToDo(toDoList.tasks);
-} else {
-    redrawToDo(toDoList.tasks);
-}
 
 function redrawToDo(tasks) {
     const listToDo = document.querySelector("ul.list-group");
@@ -35,7 +32,7 @@ function updateTable(toDoList) {
 function createTask(task) {
     let listToDo = document.createElement("li");
     listToDo.classList.add("list-group-item", "list-group-item-action", "d-flex", "overflow-y-hidden");
-    listToDo.id = task.id;
+    listToDo.id = task._id;
     listToDo.innerHTML = creatTaskDocHtml(task);
 
     refreshEventInTask(listToDo);
@@ -46,15 +43,21 @@ function createTask(task) {
 function removeToDo(toDoList) {
     for (let i = 0; i < toDoList.tasks.length; i++) {
         for (const id of toDoList.selectTasksId) {
-            if (toDoList.tasks[i].id.toString() === id) {
+            if (toDoList.tasks[i]._id.toString() === id) {
                 toDoList.tasks.splice(i,1);
             }
         }
     }
 
-    toDoList.selectTasksId = [];
+    requestToServer('DELETE',toDoList.selectTasksId)
+        .then(() => {
+            getToDoListStorage().then(tasks => {
+                toDoList.tasks = tasks;
+                updateTable(toDoList);
+            });
+        });
 
-    updateTable(toDoList);
+    toDoList.selectTasksId = [];
 
     return toDoList;
 }
@@ -112,7 +115,6 @@ function modifyRow(element) {
     btnModifySuccess.addEventListener("click", (ev)=> {
 
         toDoList.tasks = successModify(toDoList.tasks, ev.target).tasks;
-        saveToDoListLocalStorage(toDoList);
     })
 
     checkBoxTask.addEventListener("change", (ev)=>{
@@ -124,7 +126,6 @@ function modifyRow(element) {
 
             toDoList.tasks = changeStatusTask(toDoList.tasks, ev.target);
             updateTable(toDoList);
-            saveToDoListLocalStorage(toDoList);
         });
     }
 }
@@ -138,16 +139,18 @@ function successModify(tasks, element) {
         elementTask.style = "";
         let statusTask = elementTask.querySelector("button.dropdown-toggle").value;
         let task = {
-            id: `${elementTask.id}`,
+            _id: `${elementTask.id}`,
             task: `${inputChangeTask.value}`,
             status: `${statusTask}`,
         }
         elementTask.innerHTML = creatTaskDocHtml(task)
 
-        refreshEventInTask(elementTask)
+        refreshEventInTask(elementTask);
+
+        requestToServer('PUT', task);
 
         for (let i=0; i<tasks.length; i++) {
-            if (tasks[i].id.toString() === task.id) {
+            if (tasks[i]._id.toString() === task.id) {
                 tasks[i] = task;
                 return {
                     tasks: tasks,
@@ -167,7 +170,7 @@ function canselModify(tasks, element) {
     elementTask.style = "";
 
     tasks.find((value)=>{
-        if (value.id.toString() === elementTask.id) {
+        if (value._id.toString() === elementTask.id) {
             elementTask.innerHTML = creatTaskDocHtml(value);
         }
     })
@@ -180,25 +183,43 @@ btnAddTask.addEventListener("click",()=>{
     let inputAddTask = document.getElementById("recording-task");
 
     if (checkInputFull(inputAddTask)) {
-        let task = {
-            id: `${Math.floor(Math.random() * (2000 - 0) + 0)}`,
-            task: `${inputAddTask.value}`,
-            status: "noteWaiting",
-        }
+        creatSpinerBorder();
 
-        toDoList.tasks.unshift(task);
+        let task = {
+            task: `${inputAddTask.value}`,
+            status: "noteWaiting"
+        }
+        requestToServer('POST', task)
+            .then(() => {
+            getToDoListStorage().then(tasks => {
+                toDoList.tasks = tasks;
+                updateTable(toDoList);
+            });
+        });
 
         inputAddTask.value = "";
-
-        saveToDoListLocalStorage(toDoList);
-
-        updateTable(toDoList);
     }
 });
 
 function checkInputFull(element) {
 
     return  element.checkValidity()
+}
+
+function creatSpinerBorder() {
+    let list = document.querySelector("ul.list-group");
+    var theFirstChild = list.firstChild;
+    let listToDo = document.createElement("li");
+    listToDo.classList.add("list-group-item", "list-group-item-action", "d-flex", "justify-content-center");
+    listToDo.innerHTML = `
+            <div class="text-center ">
+                <div class="spinner-border text-primary" style="width: 2.5rem; height: 2.5rem;" role="status">
+                    <span class="visually-hidden">Загрузка...</span>
+                </div>
+            </div>
+        `;
+
+    list.insertBefore(listToDo,theFirstChild);
 }
 
 function creatTaskDocHtml(task) {
@@ -264,7 +285,6 @@ function refreshEventInTask(element) {
 
             toDoList.tasks = changeStatusTask(toDoList.tasks, ev.target);
             updateTable(toDoList);
-            saveToDoListLocalStorage(toDoList);
         });
     }
 
@@ -275,7 +295,6 @@ function refreshEventInTask(element) {
     btnDelete.addEventListener("click", (ev)=>{
         toDoList.selectTasksId.push(findParentTask(ev.target).id);
         toDoList = removeToDo(toDoList);
-        saveToDoListLocalStorage(toDoList);
     });
 
     checkBoxTask.addEventListener("change", (ev)=>{
@@ -296,8 +315,10 @@ function changeStatusTask(tasks, element) {
     taskText.classList.add(statusTask(status));
 
     for (let i=0; i<tasks.length; i++) {
-        if (tasks[i].id.toString() === task.id) {
+        if (tasks[i]._id.toString() === task.id) {
             tasks[i].status = status;
+
+            requestToServer('PUT', tasks[i]);
 
             return tasks;
         }
@@ -368,8 +389,6 @@ function addEventDelete() {
     btnSubmitDelete.addEventListener("click", () => {
         toDoList = removeToDo(toDoList);
 
-        saveToDoListLocalStorage(toDoList);
-
         updateTable(toDoList);
 
         btnCancelDelete.click();
@@ -381,6 +400,7 @@ function addEventDelete() {
         listTask.textContent = "";
 
         toDoList.tasks = [];
+        toDoList = removeToDo(toDoList)
     });
 
     btnsDeleteDropdown[1].addEventListener("click", ()=>{
@@ -389,22 +409,20 @@ function addEventDelete() {
     btnsDeleteDropdown[2].addEventListener("click", ()=>{
         btnCancelDelete.click();
 
-        toDoList.selectTasksId = deleteTaskByStatus("noteSuccess")
+        toDoList.selectTasksId = selectTaskByStatus("noteSuccess")
 
         toDoList = removeToDo(toDoList);
-        saveToDoListLocalStorage(toDoList);
     });
     btnsDeleteDropdown[3].addEventListener("click", ()=>{
         btnCancelDelete.click();
 
-        toDoList.selectTasksId = deleteTaskByStatus("noteNotSuccess")
+        toDoList.selectTasksId = selectTaskByStatus("noteNotSuccess")
 
         toDoList =  removeToDo(toDoList);
-        saveToDoListLocalStorage(toDoList);
     });
 }
 
-function deleteTaskByStatus(status) {
+function selectTaskByStatus(status) {
     const btnStatus = document.querySelectorAll("button.dropdown-toggle");
     let ids = [];
 
@@ -448,9 +466,26 @@ function addEventSort() {
     })
 }
 
-function saveToDoListLocalStorage(toDoList) {
-    localStorage.setItem("toDoList",JSON.stringify(toDoList));
+async function getToDoListStorage() {
+    let  tasks = [];
+    const response = await fetch("http://localhost:3000/api/ToDoList/Tasks")
+    if (response.ok) {
+        return await response.json()
+    }
+
+    return tasks;
 }
-function getToDoListLocalStorage() {
-    return JSON.parse(localStorage.getItem("toDoList"));
+
+async function requestToServer(method, task) {
+
+    let postBody = {
+        method: method,
+        headers: {
+            'Content-Type': 'application/json;charset=utf-8'
+        },
+        body: JSON.stringify(task)
+    };
+
+    return fetch('http://localhost:3000', postBody)
+        .then(response => response );
 }
