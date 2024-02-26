@@ -32,7 +32,7 @@ const deleteTasks = (req, res) => {
     ids.length !== 0 ? param = {_id: ids} : {};
 
     ToDo.deleteMany(param)
-        .then(() => res.sendStatus(200).json(ids))
+        .then(() => res.sendStatus(200))
         .catch((error) => handleError(res, error));
 }
 
@@ -40,7 +40,7 @@ const putTask = (req, res) => {
     const {_id, task, status} = req.body;
     ToDo
         .findByIdAndUpdate(_id, {task , status},{ new: true })
-        .then((result) => res.sendStatus(200).json(result))
+        .then((result) => res.sendStatus(200))
         .catch((error) => handleError(res, error))
 }
 

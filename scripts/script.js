@@ -115,6 +115,7 @@ function modifyRow(element) {
     btnModifySuccess.addEventListener("click", (ev)=> {
 
         toDoList.tasks = successModify(toDoList.tasks, ev.target).tasks;
+        console.log(toDoList.tasks);
     })
 
     checkBoxTask.addEventListener("change", (ev)=>{
@@ -150,7 +151,7 @@ function successModify(tasks, element) {
         requestToServer('PUT', task);
 
         for (let i=0; i<tasks.length; i++) {
-            if (tasks[i]._id.toString() === task.id) {
+            if (tasks[i]._id.toString() === task._id) {
                 tasks[i] = task;
                 return {
                     tasks: tasks,
@@ -486,6 +487,6 @@ async function requestToServer(method, task) {
         body: JSON.stringify(task)
     };
 
-    return fetch('http://localhost:3000', postBody)
+    return fetch('http://localhost:3000/api', postBody)
         .then(response => response );
 }
