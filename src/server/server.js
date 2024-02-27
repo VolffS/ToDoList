@@ -17,8 +17,9 @@ app.listen(PORT, (error) => {
 });
 
 app.use(express.json());
-app.use(express.static('styles'));
-app.use(express.static('scripts'));
+// app.use(express.static('styles'));
+// app.use(express.static('scripts'));
+app.use(express.static('dist'));
 
 app.use(toDoListRoute);
 app.use(apiToDoListRoute);

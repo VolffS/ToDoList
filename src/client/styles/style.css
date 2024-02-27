@@ -1,0 +1,39 @@
+.delete-checkBox {
+  display: none;
+}
+
+body header div.header-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+body header div.header-container img {
+  margin-right: 1rem;
+}
+body header div.header-container .img-note {
+  margin-left: 1rem;
+  width: 4rem;
+  height: 4rem;
+}
+body header div.header-container div.img-note {
+  background-size: contain;
+  background-image: url("../resources/img/notes-taking-notes.gif");
+}
+body ul li {
+  max-height: 55px;
+}
+body ul li p {
+  overflow-wrap: anywhere;
+}
+
+.errorBody {
+  height: 100vh;
+  display: grid;
+  place-items: center;
+  background-color: black;
+}
+.errorBody .Text-H1 {
+  color: red;
+}
+
+/*# sourceMappingURL=style.css.map */

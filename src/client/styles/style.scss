@@ -1,0 +1,43 @@
+.delete-checkBox {
+  display: none;
+}
+body {
+  header {
+    div.header-container{
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      img {
+        margin-right: 1rem;
+      }
+
+      .img-note{
+        margin-left: 1rem;
+        width: 4rem;
+        height:  4rem;
+      }
+      div.img-note {
+        background-size: contain;
+        background-image: url("../resources/img/notes-taking-notes.gif");
+      }
+    }
+  }
+  ul {
+    li {
+      p{
+        overflow-wrap: anywhere;
+      }
+      max-height: 55px;
+    }
+  }
+}
+
+.errorBody{
+  height: 100vh;
+  display: grid;
+  place-items: center;
+  background-color: black;
+  .Text-H1 {
+    color: red;
+  }
+}
