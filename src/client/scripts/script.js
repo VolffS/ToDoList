@@ -1,3 +1,7 @@
+// import '/pages/index.html';
+// import '/pages/error.html';
+// import '/styles/style.scss';
+
 let toDoList = {
     tasks: [],
     selectTasksId: [],
@@ -360,7 +364,7 @@ function filterToDoList(tasks, filter) {
 }
 
 function changeStyleCSS( selector, property, value ) {
-    const stylesheet = document.styleSheets[1];
+    const stylesheet = document.styleSheets[3];
     let elementRules;
 
     for (const stylesheetElement of stylesheet.cssRules) {
