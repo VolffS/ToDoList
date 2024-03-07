@@ -89,7 +89,7 @@ export function Main() {
             filter: status
         }))
    }
-    function againTask() {
+    function renderFilterTask() {
         let temp = filterByStatus(stateToDoList.tasks, stateToDoList.filter);
 
         return  temp.map((task) => <Task key={task._id.toString()} value={task} {...{addSelectTask,deleteBtnTask, modifyBtnTask, changeStatus}}/>)
@@ -187,7 +187,7 @@ export function Main() {
 
             <div className="my-3 p-3 bg-body rounded shadow-sm">
                 <ul className="list-group">
-                    { stateToDoList.filter !== "" ? againTask()
+                    { stateToDoList.filter !== "" ? renderFilterTask()
                         : stateToDoList.tasks.length !== 0
                             ? stateToDoList.tasks.map((task) => <Task key={task._id.toString()} value={task} {...{addSelectTask,deleteBtnTask, modifyBtnTask, changeStatus}}/>)
                             : <Spinner />}
