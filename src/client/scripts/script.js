@@ -1,496 +1,357 @@
-// import '/pages/index.html';
-// import '/pages/error.html';
-// import '/styles/style.scss';
-
-let toDoList = {
+import React, {useEffect, useState} from "react";
+import ReactDOM from 'react-dom';
+import {changeStyleCSS} from "./features/helpers";
+const {statusInClassTask, findParentTask, statusInText, checkInputFull, filterByStatus} = require("./features/helpers")
+const {getToDoListToServer, requestToServer} = require("./interaction-with-server");
+const {addTask, changeStatusTask, removeToDo} = require('./features/crud');
+const initiationToDoList = {
     tasks: [],
     selectTasksId: [],
     filter: ""
 }
+export function Main() {
 
-addEventDelete();
-addEventUl();
-addEventSort();
+    const [stateToDoList, setToDoList] = useState(initiationToDoList);
 
-getToDoListStorage().then(tasks => {
-    toDoList.tasks = tasks;
-    redrawToDo(toDoList.tasks);
-});
-
-
-function redrawToDo(tasks) {
-    const listToDo = document.querySelector("ul.list-group");
-    listToDo.textContent = "";
-
-    for (const task of tasks) {
-        listToDo.appendChild(createTask(task))
-    }
-}
-
-function updateTable(toDoList) {
-    let sortTasks = filterToDoList(toDoList.tasks, toDoList.filter)
-
-    redrawToDo(sortTasks);
-}
-
-function createTask(task) {
-    let listToDo = document.createElement("li");
-    listToDo.classList.add("list-group-item", "list-group-item-action", "d-flex", "overflow-y-hidden");
-    listToDo.id = task._id;
-    listToDo.innerHTML = creatTaskDocHtml(task);
-
-    refreshEventInTask(listToDo);
-
-    return listToDo;
-}
-
-function removeToDo(toDoList) {
-    for (let i = 0; i < toDoList.tasks.length; i++) {
-        for (const id of toDoList.selectTasksId) {
-            if (toDoList.tasks[i]._id.toString() === id) {
-                toDoList.tasks.splice(i,1);
-            }
-        }
-    }
-
-    requestToServer('DELETE',toDoList.selectTasksId)
-        .then(() => {
-            getToDoListStorage().then(tasks => {
-                toDoList.tasks = tasks;
-                updateTable(toDoList);
+    useEffect(() => {
+        getToDoListToServer().then(tasks => {
+            setToDoList({
+                tasks: tasks,
+                selectTasksId: [],
+                filter: ""
             });
         });
+    }, []);
 
-    toDoList.selectTasksId = [];
-
-    return toDoList;
-}
-
-function modifyRow(element) {
-    let elementTask = findParentTask(element);
-    let taskStatus = elementTask.querySelector("button.dropdown-toggle").value;
-
-    elementTask.style = "min-height: 100px; max-height: none;";
-    elementTask.classList.add("was-validated");
-
-    const taskValue = elementTask.querySelector("p").textContent;
-
-    elementTask.innerHTML = `
-        <input type="checkbox" class="delete-checkBox me-2" >
-        <div class="flex-grow-1">            
-            <textarea  class="form-control text-task ${statusTask(taskStatus)}" placeholder="Обязательный пример текстового поля" required>${taskValue}</textarea>
-        </div>
-        <div class="ps-2 d-flex align-items-center" >
-            <div class="mb-1">
-                <button type="button" class="btn btn-primary dropdown-toggle rounded-bottom" value="${taskStatus}" data-bs-toggle="dropdown" aria-expanded="false">
-                    <svg viewBox="0 0 16 16" width="16" height="16">
-                    <use xlink:href="#status-note"></use></svg>
-                </button>
-                <ul class="dropdown-menu bg-secondary-subtle status-task position-fixed">
-                    <button class="dropdown-item text-black" value="noteWaiting"> Ожидает </button>
-                    <button class="dropdown-item text-black" value="noteSuccess"> Выполнено </button>
-                    <button class="dropdown-item text-black" value="noteNotSuccess"> Провалено </button>
-                </ul>
-            </div>
-            <div class="ps-2  form-floating d-grid  d-md-flex justify-content-md-end flex-wrap">
-                <div class="btn-group-vertical">
-                    <button type="button" class="btn btn-success btn-modify-success " >
-                    <svg viewBox="0 0 16 16" width="16" height="16">
-                    <use xlink:href="#change-field-success"></use></svg>          
-                    </button>
-                    <button type="button" class="btn btn-outline-danger btn-modify-cancel " >
-                    <svg viewBox="0 0 16 16" width="16" height="16" >
-                    <use xlink:href="#change-field-cansel"></use></svg>                 
-                    </button>
-                </div> 
-            </div>
-        </div>
-    `;
-
-    const btnCanselModify = elementTask.getElementsByClassName("btn-modify-cancel")[0];
-    const btnModifySuccess = elementTask.getElementsByClassName("btn-modify-success")[0];
-    const btnsChangeStatus = elementTask.querySelectorAll("ul.status-task button");
-    const checkBoxTask = elementTask.querySelector("input.delete-checkBox");
-
-    btnCanselModify.addEventListener("click", (ev)=> {
-        canselModify(toDoList.tasks, ev.target);
-    })
-
-    btnModifySuccess.addEventListener("click", (ev)=> {
-
-        toDoList.tasks = successModify(toDoList.tasks, ev.target).tasks;
-        console.log(toDoList.tasks);
-    })
-
-    checkBoxTask.addEventListener("change", (ev)=>{
-        toDoList.selectTasksId = addSelectTask(toDoList.selectTasksId, ev.target);
-    });
-
-    for (const btnStatus of btnsChangeStatus) {
-        btnStatus.addEventListener("click", (ev)=>{
-
-            toDoList.tasks = changeStatusTask(toDoList.tasks, ev.target);
-            updateTable(toDoList);
-        });
+    function addBtnTask() {
+        let emptyTask = {_id:"", task:"", status:"noteWaiting"}
+        let tasks = stateToDoList.tasks;
+        tasks.unshift(emptyTask);
+        setToDoList(prevState => ({
+            ...prevState,
+            tasks: tasks
+        }));
+        addTask().then((task)=>{
+            if (task) {
+                tasks.shift()
+                tasks.unshift(task);
+                setToDoList(prevState => ({
+                    ...prevState,
+                    tasks: tasks
+                }))
+            }
+        })
     }
-}
 
-function successModify(tasks, element) {
-    let inputChangeTask = findParentTask(element).querySelector("textarea.text-task");
+    function deleteBtnTask(id) {
+        let prevSelectTasksId = stateToDoList.selectTasksId
+        stateToDoList.selectTasksId = id
 
-    if (checkInputFull(inputChangeTask)) {
+        setToDoList(prevState => ({
+            ...prevState,
+            tasks: removeToDo(stateToDoList),
+            selectTasksId: prevSelectTasksId,
+        }));
+    }
 
-        let elementTask = findParentTask(element);
-        elementTask.style = "";
-        let statusTask = elementTask.querySelector("button.dropdown-toggle").value;
-        let task = {
-            _id: `${elementTask.id}`,
-            task: `${inputChangeTask.value}`,
-            status: `${statusTask}`,
-        }
-        elementTask.innerHTML = creatTaskDocHtml(task)
-
-        refreshEventInTask(elementTask);
-
+    function modifyBtnTask(task) {
+        let tasks = stateToDoList.tasks
         requestToServer('PUT', task);
 
-        for (let i=0; i<tasks.length; i++) {
+        for (let i= 0; i<tasks.length; i++) {
             if (tasks[i]._id.toString() === task._id) {
                 tasks[i] = task;
-                return {
-                    tasks: tasks,
-                    status: true,
-                }
             }
         }
+
+        setToDoList(prevState => ({
+            ...prevState,
+            tasks: tasks
+        }));
+
+
+
+
     }
-    return {
-        tasks: tasks,
-        status: false,
-    }
-}
-
-function canselModify(tasks, element) {
-    let elementTask = findParentTask(element);
-    elementTask.style = "";
-
-    tasks.find((value)=>{
-        if (value._id.toString() === elementTask.id) {
-            elementTask.innerHTML = creatTaskDocHtml(value);
-        }
-    })
-
-    refreshEventInTask(elementTask);
-}
-
-const btnAddTask = document.querySelector("button#btn-add-note");
-btnAddTask.addEventListener("click",()=>{
-    let inputAddTask = document.getElementById("recording-task");
-
-    if (checkInputFull(inputAddTask)) {
-        creatSpinerBorder();
-
-        let task = {
-            task: `${inputAddTask.value}`,
-            status: "noteWaiting"
-        }
-        requestToServer('POST', task)
-            .then(() => {
-            getToDoListStorage().then(tasks => {
-                toDoList.tasks = tasks;
-                updateTable(toDoList);
-            });
-        });
-
-        inputAddTask.value = "";
-    }
-});
-
-function checkInputFull(element) {
-
-    return  element.checkValidity()
-}
-
-function creatSpinerBorder() {
-    let list = document.querySelector("ul.list-group");
-    var theFirstChild = list.firstChild;
-    let listToDo = document.createElement("li");
-    listToDo.classList.add("list-group-item", "list-group-item-action", "d-flex", "justify-content-center");
-    listToDo.innerHTML = `
-            <div class="text-center ">
-                <div class="spinner-border text-primary" style="width: 2.5rem; height: 2.5rem;" role="status">
-                    <span class="visually-hidden">Загрузка...</span>
-                </div>
-            </div>
-        `;
-
-    list.insertBefore(listToDo,theFirstChild);
-}
-
-function creatTaskDocHtml(task) {
-    return `    
-        <input type="checkbox" class="delete-checkBox me-2" >
-        <div class="flex-grow-1 ">
-            <p class="m-0 ps-2 pe-2 pb-2 rounded-4 text-task ${statusTask(task.status)}">${task.task}</p>
-        </div>
-        <div class="ps-2 d-flex align-items-center" >
-            <div class="mb-1">
-                <button type="button" class="btn btn-primary dropdown-toggle rounded-bottom " value="${task.status}" data-bs-toggle="dropdown" aria-expanded="false">
-                    <svg viewBox="0 0 16 16" width="16" height="16">
-                        <use xlink:href="#status-note"></use>
-                    </svg>
-                </button>
-                <ul class="dropdown-menu bg-secondary-subtle status-task position-fixed" >
-                    <button class="dropdown-item text-black" value="noteWaiting"> Ожидает </button>
-                    <button class="dropdown-item text-black" value="noteSuccess"> Выполнено </button>
-                    <button class="dropdown-item text-black" value="noteNotSuccess"> Провалено </button>
-                </ul>
-            </div>
-            <div class="ps-2  form-floating d-grid  d-md-flex justify-content-md-end">
-
-                <button type="button" class="btn btn-primary mb-1 ms-1 btn-modify">
-                    <svg viewBox="0 0 16 16" width="16" height="16">
-                        <use xlink:href="#change-field"></use></svg>
-                </button>
-
-                <button type="button" class="btn btn-outline-danger mb-1 ms-1 btn-delete">
-                    <svg viewBox="0 0 16 16" width="16" height="16">
-                        <use xlink:href="#delete-trash"></use></svg>
-                </button>
-            </div>
-        </div>                
-    `;
-}
-
-function statusTask(status) {
-    switch (status) {
-
-        case "noteWaiting":
-            return  "bg-transparent";
-
-        case "noteSuccess":
-            return "text-bg-success";
-
-        case "noteNotSuccess":
-            return "text-bg-danger";
-
-        default :
-            return "bg-transparent";
-    }
-}
-
-function refreshEventInTask(element) {
-    const btnsChangeStatus = element.querySelectorAll("ul.status-task button");
-    const checkBoxTask = element.querySelector("input.delete-checkBox");
-    const btnModify = element.querySelector("button.btn-modify");
-    const btnDelete = element.querySelector("button.btn-delete");
-
-    for (const btnStatus of btnsChangeStatus) {
-        btnStatus.addEventListener("click", (ev)=>{
-
-            toDoList.tasks = changeStatusTask(toDoList.tasks, ev.target);
-            updateTable(toDoList);
-        });
-    }
-
-    btnModify.addEventListener("click", (ev)=>{
-        modifyRow(ev.target);
-    });
-
-    btnDelete.addEventListener("click", (ev)=>{
-        toDoList.selectTasksId.push(findParentTask(ev.target).id);
-        toDoList = removeToDo(toDoList);
-    });
-
-    checkBoxTask.addEventListener("change", (ev)=>{
-        toDoList.selectTasksId = addSelectTask(toDoList.selectTasksId, ev.target);
-    });
-}
-
-function changeStatusTask(tasks, element) {
-    let status = element.value;
-    let task = findParentTask(element.parentNode);
-    let btnStatusTask = task.querySelector("button.dropdown-toggle");
-    let taskText = task.querySelector(".text-task");
-    const cls = ["text-bg-success", "text-bg-danger", "bg-transparent"];
-
-    btnStatusTask.value = status;
-
-    taskText.classList.remove(...cls);
-    taskText.classList.add(statusTask(status));
-
-    for (let i=0; i<tasks.length; i++) {
-        if (tasks[i]._id.toString() === task.id) {
-            tasks[i].status = status;
-
-            requestToServer('PUT', tasks[i]);
-
-            return tasks;
-        }
-    }
-}
-
-function addSelectTask(ids,element) {
-    if (element.checked){
-        ids.push(findParentTask(element).id);
-    } else {
-        for (let i = 0; i<ids.length; i++) {
-            if (ids[i] === findParentTask(element).id ) {
-                ids.splice(i,1);
-            }
-        }
-    }
-    return ids;
-}
-
-function findParentTask(element) {
-    while (element.nodeName!=="LI") {
-        element = element.parentNode;
-    }
-    return element;
-}
-
-function filterToDoList(tasks, filter) {
-
-    let sortToDoList = tasks.slice();
-
-    if (filter !== ""){
-        sortToDoList = sortToDoList.filter((element)=>{
-            return element.status === filter;
-        });
-    }
-
-    return sortToDoList;
-}
-
-function changeStyleCSS( selector, property, value ) {
-    const stylesheet = document.styleSheets[3];
-    let elementRules;
-
-    for (const stylesheetElement of stylesheet.cssRules) {
-        if(stylesheetElement.selectorText === selector) {
-            elementRules = stylesheetElement;
+    function changeStatus(element) {
+        stateToDoList.tasks = changeStatusTask(stateToDoList.tasks, element)
+        if (stateToDoList.filter!=="") {
+            setToDoList(prevState => ({
+                ...prevState,
+                tasks: changeStatusTask(stateToDoList.tasks, element)
+            }))
         }
     }
 
-    elementRules.style.setProperty( property, value);
-}
+    function filterTask(status) {
+        setToDoList(prevState => ({
+            ...prevState,
+            filter: status
+        }))
+   }
+    function againTask() {
+        let temp = filterByStatus(stateToDoList.tasks, stateToDoList.filter);
 
-function addEventDelete() {
-    const btnsDeleteDropdown = document.querySelectorAll("ul#main-delete button");
-    const btnSubmitDelete = document.querySelector("button#delete-submit");
-    const btnCancelDelete = document.querySelector("button#delete-cancel");
+        return  temp.map((task) => <Task key={task._id.toString()} value={task} {...{addSelectTask,deleteBtnTask, modifyBtnTask, changeStatus}}/>)
+    }
 
-    btnCancelDelete.addEventListener("click", () => {
-        for (const id of toDoList.selectTasksId) {
+    function cancelDelete() {
+        for (const id of stateToDoList.selectTasksId) {
             let selectCheckBox = document.getElementById(id).querySelector( "input[type='checkbox']");
             selectCheckBox.checked = !selectCheckBox.checked;
         }
-        toDoList.selectTasksId = [];
-
+        stateToDoList.selectTasksId = [];
         changeStyleCSS('.delete-checkBox', 'display', 'none');
-    });
-
-    btnSubmitDelete.addEventListener("click", () => {
-        toDoList = removeToDo(toDoList);
-
-        updateTable(toDoList);
-
-        btnCancelDelete.click();
-    })
-
-    btnsDeleteDropdown[0].addEventListener("click", ()=>{
-        const listTask = document.querySelector("ul.list-group");
-
-        listTask.textContent = "";
-
-        toDoList.tasks = [];
-        toDoList = removeToDo(toDoList)
-    });
-
-    btnsDeleteDropdown[1].addEventListener("click", ()=>{
-        changeStyleCSS('.delete-checkBox', 'display', '')
-    });
-    btnsDeleteDropdown[2].addEventListener("click", ()=>{
-        btnCancelDelete.click();
-
-        toDoList.selectTasksId = selectTaskByStatus("noteSuccess")
-
-        toDoList = removeToDo(toDoList);
-    });
-    btnsDeleteDropdown[3].addEventListener("click", ()=>{
-        btnCancelDelete.click();
-
-        toDoList.selectTasksId = selectTaskByStatus("noteNotSuccess")
-
-        toDoList =  removeToDo(toDoList);
-    });
-}
-
-function selectTaskByStatus(status) {
-    const btnStatus = document.querySelectorAll("button.dropdown-toggle");
-    let ids = [];
-
-    for (const btn of btnStatus) {
-        if (btn.value === status) {
-            let parent = findParentTask(btn);
-
-            ids.push(parent.id)
-
-            parent.remove();
+        return stateToDoList.selectTasksId;
+    }
+    function submitDelete() {
+        if (stateToDoList.selectTasksId.length !== 0){
+            let temp = stateToDoList.selectTasksId
+            stateToDoList.selectTasksId = []
+            deleteBtnTask(temp)
+            changeStyleCSS('.delete-checkBox', 'display', 'none');
         }
     }
-    return ids;
-}
 
-function addEventUl() {
-    const listAllTask = document.querySelector("ul.list-group");
+    function deleteTaskByStatus(status) {
+        const btnStatus = document.querySelectorAll("li button.dropdown-toggle");
+        let ids = [];
 
-    listAllTask.addEventListener("click", (ev)=>{
-
-        if (ev.target.nodeName !== "BUTTON" && ev.target.nodeName !== "svg" && ev.target.nodeName !== "use") {
-            let parent = findParentTask(ev.target);
-            let btnMofify = parent.querySelector(".btn-modify");
-
-            if (btnMofify) {
-                btnMofify.parentNode.classList.toggle("flex-wrap");
-                parent.style.cssText !== "max-height: none;"
-                    ? parent.style = "max-height: none"
-                    : parent.style = "";
+        for (const btn of btnStatus) {
+            if (btn.value === status) {
+                ids.push(findParentTask(btn).id);
             }
         }
-    })
-}
-
-function addEventSort() {
-    const selectSort = document.querySelector("select#sort-status");
-
-    selectSort.addEventListener("change", (ev)=>{
-        toDoList.filter = ev.target.value;
-        updateTable(toDoList);
-    })
-}
-
-async function getToDoListStorage() {
-    let  tasks = [];
-    const response = await fetch("http://localhost:3000/api/ToDoList/Tasks")
-    if (response.ok) {
-        return await response.json()
+        if (ids.length !== 0) {
+            deleteBtnTask(ids);
+        }
     }
 
-    return tasks;
+    function addSelectTask(element) {
+        let ids = stateToDoList.selectTasksId;
+        if (element.checked){
+            ids.push(findParentTask(element).id);
+        } else {
+            for (let i = 0; i<ids.length; i++) {
+                if (ids[i] === findParentTask(element).id ) {
+                    ids.splice(i,1);
+                }
+            }
+        }
+
+        stateToDoList.selectTasksId = ids;
+    }
+
+    return (
+        <>
+            <div className="my-3 p-3 bg-body rounded shadow-sm">
+                <div className="mb-2  input-group">
+                    <input type="text" className="form-control" id="recording-task" name="note" placeholder="Запись"
+                           required/>
+                    <button type="submit" className="btn btn-success " id="btn-add-note"
+                            onClick={addBtnTask}> Добавить
+                    </button>
+                </div>
+                <div className="mb-1  form-floating d-grid  d-md-flex justify-content-md-end">
+                    <div className="col-md-3 me-2 rounded-start">
+                        <select onChange={(ev)=>{filterTask(ev.target.value)}} className="form-select " id="sort-status">
+                            <option selected value="" disabled>Сортировка...</option>
+                            <option value="">Без сортировки</option>
+                            <option value="noteWaiting">Ожидающие</option>
+                            <option value="noteSuccess">Все выполненные</option>
+                            <option value="noteNotSuccess">Все не выполненные</option>
+                        </select>
+                    </div>
+                    <div className="btn-group ">
+                        <button type="button" className="btn btn-outline-danger dropdown-toggle rounded-bottom"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                            Удаление
+                        </button>
+                        <ul id="main-delete" className="dropdown-menu bg-secondary-subtle ">
+                            <ButtonDelete {...{text:"Все", callback:()=>{deleteBtnTask([])}}} />
+                            <ButtonDelete {...{text:"Выбрать", callback:()=>{changeStyleCSS('.delete-checkBox', 'display', '')}}} />
+                            <ButtonDelete {...{text:"Все выполненные", callback:()=>{deleteTaskByStatus("noteSuccess")}}} />
+                            <ButtonDelete {...{text:"Все не выполненные", callback:()=>{deleteTaskByStatus("noteNotSuccess")}}} />
+                        </ul>
+                    </div>
+                </div>
+                <div className="btn-group position-fixed bottom-0 end-0 mb-3 me-3 z-3 delete-checkBox">
+                    <button type="button" id="delete-cancel" className="btn btn-secondary" onClick={cancelDelete}>
+                        Отмена
+                    </button>
+                    <button type="button" id="delete-submit" className="btn btn-danger" onClick={submitDelete}>
+                        Удалить
+                    </button>
+                </div>
+            </div>
+
+            <div className="my-3 p-3 bg-body rounded shadow-sm">
+                <ul className="list-group">
+                    { stateToDoList.filter !== "" ? againTask()
+                        : stateToDoList.tasks.length !== 0
+                            ? stateToDoList.tasks.map((task) => <Task key={task._id.toString()} value={task} {...{addSelectTask,deleteBtnTask, modifyBtnTask, changeStatus}}/>)
+                            : <Spinner />}
+                </ul>
+            </div>
+        </>
+    );
 }
 
-async function requestToServer(method, task) {
 
-    let postBody = {
-        method: method,
-        headers: {
-            'Content-Type': 'application/json;charset=utf-8'
-        },
-        body: JSON.stringify(task)
-    };
 
-    return fetch('http://localhost:3000/api', postBody)
-        .then(response => response );
+function Task(props) {
+    const [stateModifyTask, setModifyTask] = useState(false);
+    const [stateWideTask, setWideTask] = useState(false);
+    let {_id, task, status} = props.value;
+    let deleteCallback = props.deleteBtnTask;
+    let changeStatusCallback = props.changeStatus;
+    let addSelectTaskCallback = props.addSelectTask;
+    let modifyCallback = props.modifyBtnTask;
+    let liClassName = `list-group-item list-group-item-action d-flex overflow-y-hidden justify-content-center ${stateModifyTask ? "was-validated"  : ""}`;
+
+    function switchModify() {
+        setModifyTask(!stateModifyTask);
+    }
+
+    function expandLi(element) {
+        if (element.nodeName !== "BUTTON" && element.nodeName !== "svg" && element.nodeName !== "use") {
+            if (!stateModifyTask) {
+                setWideTask(!stateWideTask);
+            }
+        }
+    }
+
+    return (<li id={_id} className={liClassName}
+                style={stateModifyTask ? {"min-height":"100px" , "max-height":" none"} : stateWideTask ? {"max-height": "none"} : {}}
+                onClick={(ev)=> expandLi(ev.target)}>
+        <input type="checkbox" className="delete-checkBox me-2" onChange={(ev)=>{addSelectTaskCallback(ev.target)}}/>
+        {stateModifyTask
+            ? <ModifyTask {...{value: props.value, modifyCallback, switchModify}}/>
+            : task !== ""
+                ? <StaticTask {...{value: props.value, stateWideTask:stateWideTask, changeStatusCallback, deleteCallback, switchModify}}/>
+                : <Spinner />}
+    </li>);
+}
+
+function StaticTask({value, stateWideTask, changeStatusCallback, deleteCallback, switchModify}) {
+    let {_id, task, status} = value;
+    const [stateStatus, setStatus] = useState({status});
+    let statusClass = `m-0 ps-2 pe-2 pb-2 rounded-4 text-task ${statusInClassTask(status)}`;
+    function changeState(ev){
+        setStatus(ev.target.value);
+        changeStatusCallback(ev.target);
+    }
+
+    return (<>
+        <div className="flex-grow-1">
+            <p className={statusClass}>{task}</p>
+        </div>
+        <div className="ps-2 d-flex align-items-center">
+            <div className="mb-1">
+                <button type="button" className="btn btn-primary dropdown-toggle rounded-bottom "
+                        value={status}
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                    <svg viewBox="0 0 16 16" width="16" height="16">
+                        <use href="#status-note"></use>
+                    </svg>
+                </button>
+                <ul className="dropdown-menu bg-secondary-subtle status-task position-fixed">
+                    <ButtonStatus {...{status: "noteWaiting", changeState}} />
+                    <ButtonStatus {...{status: "noteSuccess", changeState}} />
+                    <ButtonStatus {...{status: "noteNotSuccess", changeState}} />
+                </ul>
+            </div>
+            <div className="ps-2  form-floating d-grid  d-md-flex justify-content-md-end" style={stateWideTask ?{"flex-wrap":"wrap"} :{}}>
+
+                <button type="button" className="btn btn-primary mb-1 ms-1 btn-modify" onClick={switchModify}>
+                    <svg viewBox="0 0 16 16" width="16" height="16">
+                        <use href="#change-field"></use>
+                    </svg>
+                </button>
+
+                <button type="button" className="btn btn-outline-danger mb-1 ms-1 btn-delete" onClick={() => {
+                    deleteCallback(_id)
+                }}>
+                    <svg viewBox="0 0 16 16" width="16" height="16">
+                        <use href="#delete-trash"></use>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </>);
+}
+
+function ModifyTask({value, modifyCallback, switchModify}) {
+    let {task, status} = value
+
+    let statusClass = `m-0 ps-2 pe-2 pb-2 rounded-4 text-task ${statusInClassTask(status)}`
+
+    function successModify(element) {
+        let inputChangeTask = findParentTask(element).querySelector("textarea.text-task");
+
+        if (checkInputFull(inputChangeTask)) {
+            let elementTask = findParentTask(element);
+
+            let task = {
+                _id: `${elementTask.id}`,
+                task: `${inputChangeTask.value}`,
+                status: `${status}`,
+            }
+            switchModify()
+            modifyCallback(task);
+        }
+    }
+
+    return (<>
+        <div className="flex-grow-1">
+            <textarea className={statusClass} placeholder="Напиши своё дело"
+                      required>{task}</textarea>
+        </div>
+        <div className="ps-2 d-flex align-items-center">
+            <div className="ps-2  form-floating d-grid  d-md-flex justify-content-md-end flex-wrap">
+                <div className="btn-group-vertical">
+                    <button type="button" className="btn btn-success btn-modify-success"
+                            onClick={(ev) => {
+                                successModify(ev.target)
+                            }}>
+                        <svg viewBox="0 0 16 16" width="16" height="16">
+                            <use href="#change-field-success"></use>
+                        </svg>
+                    </button>
+                    <button type="button" className="btn btn-outline-danger btn-modify-cancel"
+                            onClick={switchModify}>
+                        <svg viewBox="0 0 16 16" width="16" height="16">
+                            <use href="#change-field-cansel"></use>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </>);
+}
+
+function ButtonStatus({status, changeState}) {
+    return <button className="dropdown-item text-black" value={status} onClick={(ev) => {
+        changeState(ev)
+    }}>{statusInText(status)}</button>
+}
+
+function ButtonDelete({text, callback}) {
+    return (
+        <li>
+        <button className="dropdown-item text-black" onClick={callback}>
+                <strong>{text}</strong>
+            </button>
+        </li>
+    );
+}
+
+function Spinner() {
+    return (
+        <div className="text-center">
+            <div className="spinner-border text-primary " style={{width: "2.6rem", height: "2.6rem"}} role="status">
+                <span className="visually-hidden">Загрузка...</span>
+            </div>
+        </div>
+    );
 }

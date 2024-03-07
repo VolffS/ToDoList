@@ -32,7 +32,7 @@ const deleteTasks = (req, res) => {
     ids.length !== 0 ? param = {_id: ids} : {};
 
     ToDo.deleteMany(param)
-        .then(() => res.sendStatus(200))
+        .then((result) => res.sendStatus(200))
         .catch((error) => handleError(res, error));
 }
 

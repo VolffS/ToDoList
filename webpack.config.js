@@ -52,5 +52,9 @@ module.exports = {
             filename: 'style.css',
         })
     ],
+    performance: {
+        maxAssetSize: 1000000,
+        maxEntrypointSize: 400000,
+    },
 
 }
