@@ -7,11 +7,11 @@ import {
     requestToServerAdd,
     requestToServerDelete,
     requestToServerPut
-} from "./interaction-with-server";
+} from "./features/interaction-with-server";
 import {filterByStatus} from "./features/helpers"
 import {changeStatusTask} from './features/crud';
-import {DropdownButtonDelete} from "./dropdownButtonDelete";
-import {ToDoList} from "./toDoList";
+import {DropdownButtonDelete} from "./components/dropdownButtonDelete";
+import {ToDoList} from "./components/toDoList";
 
 const initiationToDoList = {
     /**
@@ -73,12 +73,12 @@ export function Main() {
     function modifyBtnTask(task) {
         requestToServerPut(task).finally(()=>{freshStateToDoList()});
     }
-    function changeStatus(element) {
-        stateToDoList.tasks = changeStatusTask(stateToDoList.tasks, element)
+    function changeStatus(status, id) {
+        stateToDoList.tasks = changeStatusTask(stateToDoList.tasks, status, id)
         if (stateToDoList.filter!=="") {
             setToDoList(prevState => ({
                 ...prevState,
-                tasks: changeStatusTask(stateToDoList.tasks, element)
+                tasks: changeStatusTask(stateToDoList.tasks, status, id)
             }))
         }
     }

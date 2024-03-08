@@ -1,6 +1,6 @@
 import React, {useState} from "react";
-import {statusInClassTask} from "./features/helpers";
-import {ButtonStatus} from "./components/buttonStatus";
+import {statusInClassTask} from "../features/helpers";
+import {ButtonStatus} from "./buttonStatus";
 
 export function StaticTask({value, stateWideTask, changeStatusCallback, deleteCallback, switchModify}) {
     let {_id, task, status} = value;
@@ -9,7 +9,7 @@ export function StaticTask({value, stateWideTask, changeStatusCallback, deleteCa
 
     function changeState(ev) {
         setStatus(ev.target.value);
-        changeStatusCallback(ev.target);
+        changeStatusCallback(ev.target.value, _id);
     }
 
     return (<>

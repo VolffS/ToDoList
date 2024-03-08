@@ -1,16 +1,3 @@
-export function changeStyleCSS( selector, property, value ) {
-    const stylesheet = document.styleSheets[3];
-    let elementRules;
-
-    for (const stylesheetElement of stylesheet.cssRules) {
-        if(stylesheetElement.selectorText === selector) {
-            elementRules = stylesheetElement;
-        }
-    }
-
-    elementRules.style.setProperty( property, value);
-}
-
 export function statusInClassTask(status) {
     switch (status) {
 
@@ -44,15 +31,7 @@ export function statusInText(status) {
     }
 }
 
-export function findParentTask(element) {
-    while (element.nodeName!=="LI") {
-        element = element.parentNode;
-    }
-    return element;
-}
-
 export function checkInputFull(element) {
-
     return  element.checkValidity()
 }
 

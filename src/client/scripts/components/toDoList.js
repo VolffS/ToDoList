@@ -1,4 +1,4 @@
-import {Spinner} from "./components/spinner";
+import {Spinner} from "./spinner";
 import {Task} from "./task";
 import React from "react";
 

@@ -1,8 +1,8 @@
 import React, {useState} from "react";
-import {DeleteCheckBox} from "./components/deleteCheckBox";
+import {DeleteCheckBox} from "./deleteCheckBox";
 import {ModifyTask} from "./modifyTask";
 import {StaticTask} from "./staticTask";
-import {Spinner} from "./components/spinner";
+import {Spinner} from "./spinner";
 
 export function Task(props) {
     const [stateModifyTask, setModifyTask] = useState(false);

@@ -1,4 +1,4 @@
-import {ButtonDelete} from "./components/buttonDelete";
+import {ButtonDelete} from "./buttonDelete";
 import React from "react";
 
 export function DropdownButtonDelete({deleteBtnTask, setSelectingWhatDelete, deleteTaskByStatus}) {

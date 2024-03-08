@@ -1,5 +1,5 @@
 import React, {createRef, useState} from "react";
-import {checkInputFull, statusInClassTask} from "./features/helpers";
+import {checkInputFull, statusInClassTask} from "../features/helpers";
 
 export function ModifyTask({value, modifyCallback, switchModify}) {
     let {_id, task, status} = value
