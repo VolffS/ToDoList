@@ -9,7 +9,7 @@ export function StaticTask({value, stateWideTask, changeStatusCallback, deleteCa
 
     function changeState(ev) {
         setStatus(ev.target.value);
-        changeStatusCallback(ev.target);
+        changeStatusCallback(ev.target.value, _id);
     }
 
     return (<>

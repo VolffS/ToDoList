@@ -73,12 +73,12 @@ export function Main() {
     function modifyBtnTask(task) {
         requestToServerPut(task).finally(()=>{freshStateToDoList()});
     }
-    function changeStatus(element) {
-        stateToDoList.tasks = changeStatusTask(stateToDoList.tasks, element)
+    function changeStatus(status, id) {
+        stateToDoList.tasks = changeStatusTask(stateToDoList.tasks, status, id)
         if (stateToDoList.filter!=="") {
             setToDoList(prevState => ({
                 ...prevState,
-                tasks: changeStatusTask(stateToDoList.tasks, element)
+                tasks: changeStatusTask(stateToDoList.tasks, status, id)
             }))
         }
     }
