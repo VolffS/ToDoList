@@ -13,7 +13,6 @@ export function Task(props) {
     let addSelectTaskCallback = props.addSelectTask;
     let modifyCallback = props.modifyBtnTask;
     let liClassName = `list-group-item list-group-item-action d-flex overflow-y-hidden justify-content-center ${stateModifyTask ? "was-validated" : ""}`;
-    let temp
 
     function switchModify() {
         if (stateModifyTask) {
