@@ -33,11 +33,8 @@ export async function addTask() {
     return false
 }
 
-export function removeToDo(toDoList) {
-    if (!Array.isArray(toDoList.selectTasksId)) {
-        toDoList.selectTasksId = [toDoList.selectTasksId];
-    }
-    requestToServer('DELETE', toDoList.selectTasksId)
+export async function removeToDo(toDoList) {
+    await requestToServer('DELETE', toDoList.selectTasksId)
 
     if (toDoList.selectTasksId.length === 0){
         toDoList.tasks = [];

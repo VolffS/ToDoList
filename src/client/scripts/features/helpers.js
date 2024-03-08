@@ -1,4 +1,4 @@
-function changeStyleCSS( selector, property, value ) {
+export function changeStyleCSS( selector, property, value ) {
     const stylesheet = document.styleSheets[3];
     let elementRules;
 
@@ -11,7 +11,7 @@ function changeStyleCSS( selector, property, value ) {
     elementRules.style.setProperty( property, value);
 }
 
-function statusInClassTask(status) {
+export function statusInClassTask(status) {
     switch (status) {
 
         case "noteWaiting":
@@ -27,7 +27,7 @@ function statusInClassTask(status) {
             return "bg-transparent";
     }
 }
-function statusInText(status) {
+export function statusInText(status) {
     switch (status) {
 
         case "noteWaiting":
@@ -44,19 +44,19 @@ function statusInText(status) {
     }
 }
 
-function findParentTask(element) {
+export function findParentTask(element) {
     while (element.nodeName!=="LI") {
         element = element.parentNode;
     }
     return element;
 }
 
-function checkInputFull(element) {
+export function checkInputFull(element) {
 
     return  element.checkValidity()
 }
 
-function filterByStatus(tasks, filter) {
+export function filterByStatus(tasks, filter) {
 
     let sortToDoList = tasks.slice();
 
@@ -67,13 +67,4 @@ function filterByStatus(tasks, filter) {
     }
 
     return sortToDoList;
-}
-
-module.exports = {
-    statusInClassTask,
-    changeStyleCSS,
-    findParentTask,
-    statusInText,
-    checkInputFull,
-    filterByStatus
 }

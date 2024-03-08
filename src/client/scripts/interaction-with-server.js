@@ -1,4 +1,4 @@
-async function getToDoListToServer() {
+export async function getToDoListToServer() {
     let  tasks = [];
     let postBody = {
         mode: 'cors',
@@ -12,7 +12,7 @@ async function getToDoListToServer() {
     return tasks;
 }
 
-async function requestToServer(method, task) {
+export async function requestToServer(method, task) {
 
     let postBody = {
         method: method,
@@ -27,7 +27,12 @@ async function requestToServer(method, task) {
         .then(response => response.json() );
 }
 
-module.exports = {
-    getToDoListToServer,
-    requestToServer
+export function requestToServerDelete(task) {
+    return requestToServer("DELETE", task)
+}
+export function requestToServerPut(task) {
+    return requestToServer("PUT", task)
+}
+export function requestToServerAdd(task) {
+    return requestToServer("POST", task)
 }
