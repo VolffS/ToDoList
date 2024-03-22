@@ -40,7 +40,7 @@ const putTask = (req, res) => {
     const {_id, task, status} = req.body;
     ToDo
         .findByIdAndUpdate(_id, {task , status},{ new: true })
-        .then((result) => res.sendStatus(200))
+        .then((result) => res.sendStatus(204))
         .catch((error) => handleError(res, error))
 }
 
