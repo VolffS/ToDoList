@@ -13,7 +13,7 @@ router.get('/api/ToDoList/Tasks', getTasks);
 
 router.post('/api',addTask);
 
-router.delete('/api', deleteTasks);
+router.delete('/api/', deleteTasks);
 
 router.put('/api', putTask);
 
